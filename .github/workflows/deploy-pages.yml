@@ -1,0 +1,66 @@
+name: Deploy dominoes-pegasi to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: dominoes-pegasi/yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install
+        run: yarn --cwd dominoes-pegasi install --immutable
+
+      - name: Compute BASE_PATH (project vs user pages)
+        shell: bash
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          OWNER_NAME="${GITHUB_REPOSITORY%/*}"
+
+          if [[ "$REPO_NAME" == "$OWNER_NAME.github.io" ]]; then
+            echo "BASE_PATH=" >> "$GITHUB_ENV"
+          else
+            echo "BASE_PATH=/$REPO_NAME" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build
+        run: yarn --cwd dominoes-pegasi run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dominoes-pegasi/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
