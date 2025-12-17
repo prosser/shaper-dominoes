@@ -1,4 +1,4 @@
-name: Deploy dominoes-pegasi to GitHub Pages
+name: Deploy dominoes-web-app to GitHub Pages
 
 on:
   push:
@@ -26,13 +26,13 @@ jobs:
         with:
           node-version: 20
           cache: yarn
-          cache-dependency-path: dominoes-pegasi/yarn.lock
+          cache-dependency-path: dominoes-web-app/yarn.lock
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install
-        run: yarn --cwd dominoes-pegasi install --immutable
+        run: yarn --cwd dominoes-web-app install --immutable
 
       - name: Compute BASE_PATH (project vs user pages)
         shell: bash
@@ -47,12 +47,12 @@ jobs:
           fi
 
       - name: Build
-        run: yarn --cwd dominoes-pegasi run build
+        run: yarn --cwd dominoes-web-app run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dominoes-pegasi/build
+          path: dominoes-web-app/build
 
   deploy:
     needs: build
